@@ -1,4 +1,11 @@
-import time
+def out():
+    try:
+        with open("t.txt", "a") as file:
+            file.write("Done\n")
+
+    except:
+        with open("t.txt", "x") as file:
+            file.write("Done\n")
 
 
 class App:
@@ -6,31 +13,78 @@ class App:
     import time
     import keyboard
 
-    selected = 0
-    options = ["God Mode", "Add Money", "Infinit Ammo", "Close"]
-    active = [False for i in options]
+    isRunning = False
 
-    FPS = 1
+    # exit function
+    def close(self):
+        self.isRunning = False
+
+    # just so others can simply add their own options
+    optionTemplate = {
+        "name": "name",
+        "enabled": False,
+        "toggleOption": True,
+        "onTrigger": callable,
+        "onEnable": callable,
+        "onDisable": callable
+    }
+
+    selected = 0
+    options = [
+        {
+            "name": "God Mode",
+            "enabled": False,
+            "toggleOption": True,
+            "onTrigger": callable,
+            "onEnable": out,
+            "onDisable": out
+        },
+        {
+            "name": "Heal",
+            "enabled": False,
+            "toggleOption": False,
+            "onTrigger": out,
+            "onEnable": callable,
+            "onDisable": callable
+        },
+        {
+            "name": "Infinite Ammo",
+            "enabled": False,
+            "toggleOption": True,
+            "onTrigger": callable,
+            "onEnable": out,
+            "onDisable": out
+        },
+        {
+            "name": "Close",
+            "enabled": False,
+            "toggleOption": False,
+            "onTrigger": close,
+            "onEnable": callable,
+            "onDisable": callable
+        }
+    ]
 
     def __init__(self, FPS: int = 15) -> None:
         self.FPS = FPS
-
-    def clear(self):
-        self.os.system("cls")
+        self.isRunning = True
 
     def redraw(self):
-        self.clear()
+        self.os.system("cls")
 
+        # draw everything
         for idx, option in enumerate(self.options):
-            isActive = self.active[idx]
+            output = f"{option['name']}"
 
-            output = f"{option}"
-
-            if isActive:
-                output = f"<{output}>"
+            if option["enabled"]:
+                output = f"~{output}~"
 
             if idx == self.selected:
-                output = f"#{output}#"
+                output = f"{output} <"
+
+            # if it is not an toggle option then put back on False (Is here because of visual feedback)
+            if option["enabled"] and not option["toggleOption"]:
+                option["enabled"] = False
 
             print(output)
 
@@ -38,6 +92,7 @@ class App:
         keyPressed = False
 
         while True:
+            # sleep so long to reach wanted fps count
             self.time.sleep((1000 / self.FPS) / 1000)
 
             # selction
@@ -58,7 +113,16 @@ class App:
             elif self.keyboard.is_pressed("enter"):
                 if not keyPressed:
                     keyPressed = True
-                    self.active[self.selected] = not self.active[self.selected]
+                    self.options[self.selected]["enabled"] = not self.options[self.selected]["enabled"]
+
+                    if self.options[self.selected]["enabled"] and self.options[self.selected]["toggleOption"]:
+                        self.options[self.selected]["onEnable"]()
+
+                    elif self.options[self.selected]["enabled"] and not self.options[self.selected]["toggleOption"]:
+                        self.options[self.selected]["onTrigger"]()
+
+                    if not self.options[self.selected]["enabled"] and self.options[self.selected]["toggleOption"]:
+                        self.options[self.selected]["onDisable"]()
 
             else:
                 keyPressed = False
